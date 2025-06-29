@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CatWeb JSON Generator</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: none;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4e9bff;
+      color: white;
+      cursor: pointer;
+    }
+    textarea#jsonOutput {
+      background: #000;
+      color: lime;
+      font-family: monospace;
+      height: 400px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CatWeb JSON Generator</h1>
+
+    <form id="elementForm">
+      <select id="elementType">
+        <option value="TextLabel">TextLabel</option>
+        <option value="TextButton">TextButton</option>
+        <option value="ImageLabel">ImageLabel</option>
+        <option value="TextBox">TextBox</option>
+        <option value="Frame">Frame</option>
+        <option value="script">Script</option>
+      </select>
+
+      <input type="text" id="globalid" placeholder="globalid (e.g. A1)" required />
+      <input type="text" id="alias" placeholder="alias (optional)" />
+      <input type="text" id="text" placeholder="Text content (optional)" />
+      <input type="text" id="font" placeholder="Font (e.g. BuilderSansMedium)" />
+      <select id="font_size">
+        <option value="scaled">scaled</option>
+        <option value="tiny">tiny</option>
+        <option value="small">small</option>
+        <option value="medium">medium</option>
+        <option value="large">large</option>
+      </select>
+
+      <input type="color" id="font_color" value="#000000" />
+      <input type="color" id="background_color" value="#ffffff" />
+      <input type="text" id="background_transparency" placeholder="Background Transparency (0–1)" />
+      <input type="text" id="align_x" placeholder="Align X (e.g. Center, Left)" />
+      <input type="text" id="align_y" placeholder="Align Y (e.g. Center, Top)" />
+      <input type="text" id="anchor" placeholder="Anchor (e.g. 0.5,0.5)" />
+      <input type="text" id="position" placeholder="{0.1,0},{0.2,0}" />
+      <input type="text" id="size" placeholder="{0.8,0},{0.1,0}" />
+      <input type="text" id="href" placeholder="href (e.g. about.rbx)" />
+
+      <!-- Script Fields -->
+      <div id="scriptFields" class="hidden">
+        <textarea id="scriptText" placeholder='Script Text (e.g. ["When website loaded..."])'></textarea>
+        <textarea id="scriptActions" placeholder='Actions (e.g. [{"text":["Redirect to(domain)", {"value":"about.rbx", "t":"string", "href":"true"}]}])'></textarea>
+      </div>
+
+      <button type="submit">➕ Add Element</button>
+    </form>
+
+    <h2>📦 Generated JSON</h2>
+    <textarea id="jsonOutput" readonly></textarea>
+    <button onclick="copyJSON()">📋 Copy JSON</button>
+  </div>
+
+  <script>
+    const elements = [];
+
+    function get(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function updateJSON() {
+      const output = {
+        background: "#ffffff",
+        title: "My CatWeb Site",
+        webcontent: elements
+      };
+      document.getElementById("jsonOutput").value = JSON.stringify(output, null, 2);
+    }
+
+    document.getElementById("elementType").addEventListener("change", function () {
+      const type = this.value;
+      document.getElementById("scriptFields").classList.toggle("hidden", type !== "script");
+    });
+
+    document.getElementById("elementForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const type = get("elementType");
+
+      if (type === "script") {
+        const script = {
+          globalid: get("globalid"),
+          class: "script",
+          content: [
+            {
+              text: JSON.parse(get("scriptText") || '[]'),
+              actions: JSON.parse(get("scriptActions") || '[]')
+            }
+          ]
+        };
+        elements.push(script);
+      } else {
+        const el = {
+          globalid: get("globalid"),
+          class: type,
+          alias: get("alias"),
+          text: get("text"),
+          font: get("font"),
+          font_size: get("font_size"),
+          font_color: get("font_color"),
+          background_color: get("background_color"),
+          background_transparency: get("background_transparency"),
+          align_x: get("align_x"),
+          align_y: get("align_y"),
+          anchor: get("anchor"),
+          position: get("position"),
+          size: get("size")
+        };
+
+        if (get("href")) el.href = get("href");
+
+        elements.push(el);
+      }
+
+      updateJSON();
+      this.reset();
+      document.getElementById("scriptFields").classList.add("hidden");
+    });
+
+    function copyJSON() {
+      const textarea = document.getElementById("jsonOutput");
+      textarea.select();
+      document.execCommand("copy");
+      alert("✅ JSON copied to clipboard!");
+    }
+
+    updateJSON();
+  </script>
+</body>
+</html>
